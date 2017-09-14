@@ -1,0 +1,34 @@
+* { list-style: none; margin: 0; padding: 0; font-family: Verdana, Helvetica, Arial, sans-serif; font-size: 13px; }
+body { background: rgb(232, 244, 249) }
+
+a { color: rgb(215, 85, 85) }
+header { padding: 4px 0; background: rgb(251, 251, 202); text-align: center; }
+
+h4 { font-weight: 400 }
+input { margin: 4px; padding: 2px; width: 300px; }
+input[type="radio"] { width: auto }
+input::placeholder { color: #ccc }
+
+button { border: 1px solid #aaa; cursor: pointer; background: #f8f8f8; margin: 2px; padding: 3px 6px; }
+button:hover { border: 1px solid #ccc; background: white}
+button:active { background: #ccc;}
+
+#tip { display: none; position: fixed; color: white; background: rgb(213, 81, 81); top: 0; left: 0; text-align: center; padding: 4px 0; width: 100%; opacity: 0.9}
+.bet { display: inline-block; vertical-align: top; color: #AEAEAE; width: 600px; margin: 8px; border: 1px solid rgb(200, 255, 218); padding: 8px; background: rgb(240, 255, 244)}
+.bet .bets {margin-left: 8px; }
+.bet .votes {margin-left: 8px; }
+.bet span, .bet i, .bet b {color: #4F4F4F; font-family: Menlo, Consolas, monospace; padding: 1px; background: rgb(255, 255, 255)}
+
+.bet-creator { display: inline-block; vertical-align: top; color: #AEAEAE; width: 600px; margin: 8px; border: 1px solid rgb(200, 220, 255); padding: 8px; background: rgb(240, 241, 255)}
+
+.account { display: inline-block; vertical-align: top; color: #AEAEAE; width: 600px; margin: 8px; border: 1px solid rgb(200, 220, 255); padding: 8px; background: rgb(240, 241, 255)}
+
+.bet .op-bet, .bet .op-vote {display: none; margin: 8px; padding: 4px; background: rgb(249, 253, 250)}
+.bet .op-bet input[type=number] { width: 100px; }
+
+#key_name {display: none}
+.closed {background: rgb(255, 251, 251); border: 1px solid rgb(255, 227, 227)}
+
+@media (max-width: 640px) {
+  .bet, .bet-creator, .account { display: block; width: auto; margin: 2px; }
+}

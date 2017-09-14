@@ -1,0 +1,143 @@
+parameter (or (or (pair key nat)    # branch 1 - bet with contract and choice
+                  (pair nat key))    # branch 2 - vote for the result
+              unit);    # branch 3 - settle the contract
+
+# default storage
+# (Right (Pair (Map ) (Pair (Map ) (Pair (Pair 1 1) (List )))))
+storage (or (list (pair (contract unit unit) tez))
+            (pair (map nat (set key))    # store voting ticket
+                  (pair (map key (pair tez nat))    # store betting orders
+                        (pair (pair timestamp timestamp)    # store config
+                              string))));
+
+return nat;    # result is represented as nat
+
+code { DUP; CDR; 
+       IF_LEFT { FAIL } 
+               { SWAP; CAR;
+                 IF_LEFT { # detect if input branch is in (1,2) or 3
+                           IF_LEFT { # for branch 1
+                                     # break the storage to three parts
+                                     DIP { DUP; DUP; CAR; DIP { CDAR; DIP { CDDR } } };   
+                                     # break input pair and make it ready for map updating
+                                     DUP; CAR; DIP { CDR; AMOUNT; PAIR; SOME }; 
+                                     # update the betting orders map
+                                     DIIP { SWAP }; UPDATE; SWAP;    
+                                     # rebuild the storage
+                                     DIP { PAIR }; PAIR;
+                                     RIGHT (list (pair (contract unit unit) tez));
+                                     # return success sign
+                                     PUSH nat 0; PAIR } 
+                                   { # for branch 2 
+                                     # break the storage to two parts with duplicated voting ticket map
+                                     DIP { DUP; CAR; DIP { CDR }; DUP }; 
+                                     # break input pair
+                                     DUP; CAR; DIP { CDR }; DUP;
+                                     # keep input choice
+                                     DIP { # get voting set according to the choice
+                                           SWAP; DIP { GET; IF_NONE { PUSH (set key) (Set ) } { } }; 
+                                           # update voting set
+                                           DIP { PUSH bool True }; UPDATE; SOME };
+                                     # update voting map
+                                     UPDATE;
+                                     # rebuild the storage
+                                     PAIR;
+                                     RIGHT (list (pair (contract unit unit) tez));
+                                     PUSH nat 0; PAIR } }
+                         { # for branch 3 
+                           # break the storage to three parts
+                           DROP; DUP; DUP; CAR; DIP { CDAR };
+                           # get the right choice with max vote length
+                           LAMBDA (pair nat (set key)) 
+                                  nat 
+                                  { CDR;
+                                    LAMBDA (pair key nat) nat { CDR; PUSH nat 1; ADD };
+                                    DIIP { PUSH nat 0 };
+                                    REDUCE };
+                           MAP;
+                           # select the max vote length choice number
+                           LAMBDA (pair (pair nat nat) (pair nat nat)) 
+                                  (pair nat nat) 
+                                  { DUP; DUP; CADR; DIP { CDDR };
+                                    IFCMPGT { CAR } { CDR } };
+                           DIIP { PUSH (pair nat nat) (Pair 0 0) };
+                           REDUCE; 
+                           # construct initial value for betting map reduction
+                           CAR; 
+                           PUSH (pair (pair tez tez) (list (pair key tez))) (Pair (Pair "0" "0") (List ));
+                           SWAP;
+                           PAIR;
+                           SWAP;
+                           # get winners list and tez info
+                           LAMBDA (pair (pair key (pair tez nat)) (pair nat (pair (pair tez tez) (list (pair key tez)))))
+                                  (pair nat (pair (pair tez tez) (list (pair key tez))))
+                                  { # break all pairs
+                                    DUP; CAR; DIP { CDR;
+                                                    DUP; CAR; DIP { CDR;
+                                                                    DUP; CAR; DIP { CDR };
+                                                                    DUP; CAR; DIP { CDR } } };
+                                    DUP; CAR; DIP { CDR; 
+                                                    DUP; CAR; DIP { CDR } };
+                                    DIIP { DIP { DUP }; CMPEQ };
+                                    DIP { SWAP }; SWAP; DIIP { SWAP }; DIP { SWAP };
+                                    IF { # add each tez to both sum of tez
+                                         DIIP { DUP; DUP; DIP { DIP { ADD }; SWAP; DIP { ADD } } };
+                                         # pair item and switch the location
+                                         DIP { PAIR;
+                                               SWAP; DIP { SWAP }; };
+                                         # pair tez
+                                         DIP { PAIR };
+                                         # add item to list
+                                         DIIP { CONS };
+                                         # rebuild acc
+                                         DIP { PAIR }; PAIR } 
+                                       { # add each tez to only the whole sum of tez
+                                         DIIP { ADD };
+                                         # drop key
+                                         DIP { DROP };
+                                         # rebuild acc
+                                         DIP { PAIR; PAIR }; PAIR } };
+                           REDUCE;
+                           # prepare for the transaction
+                           CDR; DUP; CAR; DIP { CDR }; DUP; CAR; DIP { CDR };
+                           # keep precision in calculation
+                           PUSH nat 1000; MUL;
+                           EDIV;
+                           IF_NONE { FAIL } { CAR };
+                           PUSH (list (pair (contract unit unit) tez)) (List );
+                           SWAP; PAIR; SWAP;
+                           # get exact tez for each contract
+                           LAMBDA (pair (pair key tez) (pair nat (list (pair (contract unit unit) tez))))
+                                  (pair nat (list (pair (contract unit unit) tez)))
+                                  { DUP; CAR; DIP { CDR; DUP; CAR; DIP { CDR } };
+                                    DUP; CAR; DIP { CDR };
+                                    DEFAULT_ACCOUNT; DIIP { DUP; DIP { SWAP } }; 
+                                    DIP { MUL; DIP { PUSH nat 1000 }; EDIV; IF_NONE { FAIL } { CAR } }; PAIR;
+                                    CONS;
+                                    SWAP; PAIR };
+                           REDUCE;
+                           CDR; DIP { DROP };
+                           # construct storage with Left Union
+                           LEFT (pair (map nat (set key))
+                                      (pair (map key (pair tez nat)) 
+                                            (pair (pair timestamp timestamp)
+                                                  string)));
+                           # transfer tez to each winner                       
+                           PUSH bool True;
+                           LOOP { IF_LEFT { IF_CONS { DUP; CAR; DIP { CDR; }; SWAP; UNIT;
+                                                      DIIIP { LEFT (pair (map nat (set key))
+                                                                         (pair (map key (pair tez nat)) 
+                                                                               (pair (pair timestamp timestamp)
+                                                                                     string))) };
+                                                      TRANSFER_TOKENS; DROP; 
+                                                      PUSH bool True; } 
+                                                    { NIL (pair (contract unit unit) tez);
+                                                      LEFT (pair (map nat (set key))
+                                                                  (pair (map key (pair tez nat)) 
+                                                                          (pair (pair timestamp timestamp)
+                                                                                string)));
+                                                      PUSH bool False } }
+                                          { FAIL } };
+                           PUSH nat 0;
+                           PAIR } } };
+          

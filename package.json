@@ -1,0 +1,19 @@
+{
+  "name": "protobet",
+  "version": "0.0.1",
+  "description": "",
+  "main": "service.js",
+  "scripts": {
+    "server": "tsc && node service.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://qdwang@bitbucket.org/qdwang/protobet.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "homepage": "https://bitbucket.org/qdwang/protobet#readme",
+  "dependencies": {
+    "@types/node": "^8.0.27"
+  }
+}

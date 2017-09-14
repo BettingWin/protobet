@@ -1,0 +1,92 @@
+<html>
+  <head>
+    <meta name="viewport" content="user-scalable=no,initial-scale=1,maximum-scale=1" />
+    <link rel="stylesheet" href="style.css" />
+    <script src="zepto.min.js"></script>
+    <script src="index.js"></script>
+    <title> protobet </title>
+  </head>
+  <body>
+    <div id="tip">Processing...</div>
+    <header>
+      This is an experimental project written in Michelson running on Tezos alphanet. 
+      It's for study only and also available as a prototype for the project 
+      <a href="https://www.bettingwin.online" target="_blank">BettingWin</a>
+      <br>
+      Warning: the contract level value restriction has not been added yet. 
+      / Contact: <a href="mailto:im@catsigma.com">im@catsigma.com</a>
+    </header>
+
+    <div class="bet-creator">
+      Creating bet will cost you 2.01 ꜩ.<br>
+      <input placeholder="input bet title" name="title"/><br>
+      <h4>Choices: </h4>
+      <ul id="choice-lst">
+        <li><input placeholder="input choice content" name="choice" /></li>
+      </ul>
+      <div class="op">
+          <button onclick="PB.add_choice()">Add choice</button> 
+          <button onclick="PB.remove_choice()">Remove choice</button> 
+      </div>
+      <p>Betting end time: <input name="be" type="datetime" onfocus="this.value = this.value.trim() || (new Date(+new Date() + 1000 * 3600)).toISOString()" /> </p>
+      <p>Voting end time: <input name="ve" type="datetime" onfocus="this.value = this.value.trim() || (new Date(+new Date() + 2000 * 3600)).toISOString()" /> </p> 
+      <div class="op">
+          <button class="create-btn" onclick="PB.create_bet()">Create bet</button> 
+      </div>
+    </div>
+
+    <div class="account">
+      <span id="key_name"></span>
+      <h4>Current address: </h4>
+      <span id="key"></span>
+      <button onclick="PB.create_acct()">Generate new account</button>
+      <h4>Balance:</h4>
+      <span id="balance">0.00 ꜩ</span>
+      <button onclick="PB.add_balance()">Add</button>
+      <h4>Time now: <span id="time"></span></h4>
+    </div>
+
+    <div class="bet-wrapper">
+    </div>
+
+  <div id="bet-template" class="bet" style="display: none">
+    <h3></h3>
+    <p>Betting ends: <b class="be"></b> Voting ends: <b class="ve"></b></p>
+    <h4>Bets:</h4>
+    <ul class="bets">
+    </ul>
+    <h4>Votes:</h4>
+    <ul class="votes">
+    </ul>
+
+    <div class="op-bet">
+        <h5>Take a bet</h5>
+        <div class="choices">
+        </div>
+        <input name="op_amount" type="number" placeholder="tez amount" />
+        <button>Bet</button>
+      </div>
+    <div class="op-vote">
+        <h5>Take a vote</h5>
+        <div class="choices">
+        </div>
+        <button>Vote</button>
+      </div>
+  </div>
+
+  </body>
+  <script>
+    ['key_name', 'key', 'balance'].forEach(x => {
+      window.state[x] = localStorage.getItem(x)
+    })
+
+    window.view.key()
+    window.view.balance()
+
+    PB.render_bet_lst(window.state.key_name ? PB.refresh_balance : null)
+
+    setInterval(() => {
+      select('#time').innerHTML = (new Date()).toISOString()
+    }, 1000)
+  </script>
+</html>

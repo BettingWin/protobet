@@ -1,0 +1,11 @@
+parameter unit;
+storage (list (pair (contract unit unit) tez));
+return unit;
+code { CDR;
+       PUSH bool True;
+       LOOP { IF_CONS { DUP; CAR; DIP { CDR; }; SWAP; UNIT;
+                        TRANSFER_TOKENS; DROP; 
+                        PUSH bool True; } 
+                      { NIL (pair (contract unit unit) tez);
+                        PUSH bool False } };
+       UNIT; PAIR };
